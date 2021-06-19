@@ -3,11 +3,11 @@
     package="pw.prsk.goodfood">
 
     <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="${appNameRes}"
+        android:icon="${appIconRes}"
+        android:roundIcon="${appIconRoundRes}"
         android:supportsRtl="true"
+        android:allowBackup="false"
         android:theme="@style/Theme.GoodFood"
         android:name=".presentation.ui.MyApplication">
         <activity android:name=".presentation.ui.MainActivity">
@@ -18,7 +18,7 @@
             </intent-filter>
         </activity>
         <provider
-            android:authorities="pw.prsk.goodfood.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             android:name="androidx.core.content.FileProvider"
             android:exported="false"
             android:grantUriPermissions="true">
