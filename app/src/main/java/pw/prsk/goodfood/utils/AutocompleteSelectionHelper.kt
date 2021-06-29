@@ -3,6 +3,7 @@ package pw.prsk.goodfood.utils
 import android.view.View
 import android.widget.AutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
+import pw.prsk.goodfood.data.local.db.entity.RecipeCategory
 
 class AutocompleteSelectionHelper(
     private val field: TextInputLayout,
@@ -47,6 +48,13 @@ class AutocompleteSelectionHelper(
     fun addItemSelectedListener(itemSelectedListener: (Any?) -> Unit): AutocompleteSelectionHelper {
         this.itemSelectedListener = itemSelectedListener
         return this
+    }
+
+    fun setSelection(category: RecipeCategory) {
+        selectedItem = category
+        (field.editText as AutoCompleteTextView).setText(category.name, true)
+        disableInput()
+        field.setEndIconOnClickListener(endIconClickListener)
     }
 
     private fun disableInput() {

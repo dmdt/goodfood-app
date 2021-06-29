@@ -1,5 +1,6 @@
 package pw.prsk.goodfood.data.repository
 
+import androidx.recyclerview.widget.DiffUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -8,6 +9,7 @@ import pw.prsk.goodfood.data.gateway.PhotoGateway
 import pw.prsk.goodfood.data.local.db.AppDatabase
 import pw.prsk.goodfood.data.local.db.entity.*
 import pw.prsk.goodfood.data.local.prefs.RecipePreferences
+import java.lang.IllegalStateException
 import java.time.LocalDateTime
 
 class RecipeRepository(
@@ -24,10 +26,7 @@ class RecipeRepository(
     }
 
     suspend fun isDatabaseEmpty() = withContext(Dispatchers.IO) {
-        dbInstance.recipeDao().isDatabaseEmpty()
-            .map {
-                it != 0
-            }
+        dbInstance.recipeDao().isDatabaseEmpty().map { it != 0 }
     }
 
     suspend fun getAllRecipes() = withContext(Dispatchers.IO) {
@@ -101,6 +100,26 @@ class RecipeRepository(
     suspend fun getRecipeById(recipeId: Int) = withContext(Dispatchers.IO) {
         val recipe = dbInstance.recipeDao().getById(recipeId)
         getRecipeWithMeta(recipe)
+    }
+
+    suspend fun updateRecipe(recipe: RecipeWithMeta) = withContext(Dispatchers.IO) {
+        val recipeId = recipe.id ?: throw IllegalStateException("Trying update recipe without id.")
+        val oldRecipe = getRecipeById(recipeId)
+
+        if (oldRecipe.category != recipe.category) {
+            removeCategory(oldRecipe.category.id!!)
+            processCategory(recipe.category)
+        }
+
+        if (oldRecipe.photoFilename != null && oldRecipe.photoFilename != recipe.photoFilename) {
+            val uri = photoGateway.getUriForPhoto(oldRecipe.photoFilename!!)
+            photoGateway.removePhoto(uri)
+        }
+
+        val oldIngredients = processIngredients(oldRecipe.ingredientsList)
+        val newIngredients = processIngredients(recipe.ingredientsList)
+        val ingredientsDiffResult = DiffUtil.calculateDiff(IngredientsDiffCallback(oldIngredients, newIngredients))
+        ingredientsDiffResult.dispatchUpdatesTo()
     }
 
     private fun getRecipeWithMeta(recipe: Recipe): RecipeWithMeta {
@@ -218,5 +237,22 @@ class RecipeRepository(
             // Increase category usages
             dbInstance.recipeCategoryDao().increaseUsages(category.id!!)
         }
+    }
+
+    private class IngredientsDiffCallback(
+        private val oldList: List<Ingredient>,
+        private val newList: List<Ingredient>
+    ): DiffUtil.Callback() {
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition] == newList[newItemPosition]
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition] == newList[newItemPosition]
+        }
+
+        override fun getOldListSize(): Int = oldList.size
+
+        override fun getNewListSize(): Int = newList.size
     }
 }

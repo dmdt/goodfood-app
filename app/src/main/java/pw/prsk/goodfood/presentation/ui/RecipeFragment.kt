@@ -28,6 +28,8 @@ class RecipeFragment : Fragment() {
     @Inject lateinit var vmFactory: ViewModelProvider.Factory
     private lateinit var viewModel: RecipeViewModel
 
+    private var recipeId: Int? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         (requireActivity().application as MyApplication).appComponent.inject(this)
@@ -40,8 +42,8 @@ class RecipeFragment : Fragment() {
 
     private fun handleArguments() {
         if (arguments != null) {
-            val recipeId = requireArguments().getInt(RECIPE_ID_KEY)
-            viewModel.loadRecipe(recipeId)
+            recipeId = requireArguments().getInt(RECIPE_ID_KEY)
+            viewModel.loadRecipe(recipeId!!)
         } else {
             throw IllegalStateException("Recipe id should be provided.")
         }
@@ -134,9 +136,13 @@ class RecipeFragment : Fragment() {
         binding.tbToolbar.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.actionEditRecipe -> {
+                    val args = Bundle().apply {
+                        putString(EditRecipeFragment.FLOW_TYPE_KEY, EditRecipeFlowType.FLOW_EDIT_RECIPE.name)
+                        putInt(EditRecipeFragment.EDIT_ID_KEY, recipeId!!)
+                    }
                     Navigation.findNavController(requireActivity(),
                         R.id.fcvContainer
-                    ).navigate(R.id.actionNavigateToEditRecipe)
+                    ).navigate(R.id.actionNavigateToEditRecipe, args)
                     true
                 }
                 R.id.actionMarkCooked -> {

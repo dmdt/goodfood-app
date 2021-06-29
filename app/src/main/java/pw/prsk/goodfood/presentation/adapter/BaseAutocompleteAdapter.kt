@@ -21,13 +21,13 @@ abstract class BaseAutocompleteAdapter<T>(
 
     private val filter = object : Filter() {
         override fun performFiltering(constraint: CharSequence?): FilterResults {
-            val query = constraint?.toString()?.toLowerCase(Locale.getDefault())
+            val query = constraint?.toString()?.lowercase(Locale.getDefault())
             val filterResults = FilterResults()
 
             filterResults.values = if (query.isNullOrEmpty()) {
                 items
             } else {
-                items.filter { getItemName(it).toLowerCase(Locale.getDefault()).contains(query) }
+                items.filter { getItemName(it).lowercase(Locale.getDefault()).contains(query) }
             }
             return filterResults
         }

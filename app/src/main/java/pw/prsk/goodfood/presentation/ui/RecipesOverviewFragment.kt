@@ -82,7 +82,10 @@ class RecipesOverviewFragment : Fragment() {
         }
 
         binding.fabAddMeal.setOnClickListener {
-            Navigation.findNavController(requireActivity(), R.id.fcvContainer).navigate(R.id.actionNavigateToEditRecipe)
+            val args = Bundle().apply {
+                putString(EditRecipeFragment.FLOW_TYPE_KEY, EditRecipeFlowType.FLOW_ADD_RECIPE.name)
+            }
+            Navigation.findNavController(requireActivity(), R.id.fcvContainer).navigate(R.id.actionNavigateToEditRecipe, args)
         }
 
         binding.bAllRecipes.setOnClickListener {

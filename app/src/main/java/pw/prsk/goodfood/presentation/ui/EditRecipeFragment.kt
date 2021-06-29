@@ -9,7 +9,6 @@ import android.widget.AutoCompleteTextView
 import android.widget.PopupMenu
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -48,11 +47,27 @@ class EditRecipeFragment : Fragment() {
 
     private var servingsCount: Int = 4
 
+    private lateinit var fragmentFlowType: EditRecipeFlowType
+    private var editRecipeId: Int = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         (requireActivity().application as MyApplication).appComponent.inject(this)
         viewModel = ViewModelProvider(this, vmFactory).get(EditRecipeViewModel::class.java)
+
+        handleArguments()
+    }
+
+    private fun handleArguments() {
+        arguments?.let {
+            fragmentFlowType = it.getString(FLOW_TYPE_KEY)?.let { flowType ->
+                EditRecipeFlowType.valueOf(flowType)
+            } ?: throw java.lang.IllegalStateException("Unknown fragment type.")
+            editRecipeId = it.getInt(EDIT_ID_KEY, -1)
+        } ?: throw IllegalStateException("Fragment flow should be provided in arguments.")
+
+        viewModel.setFlowType(fragmentFlowType, editRecipeId)
     }
 
     override fun onCreateView(
@@ -149,6 +164,13 @@ class EditRecipeFragment : Fragment() {
                 Navigation.findNavController(requireActivity(), R.id.fcvContainer).popBackStack()
             }
         }
+
+        viewModel.editRecipeData.observe(viewLifecycleOwner) { recipe ->
+            binding.tilRecipeName.editText?.setText(recipe.name)
+            categorySelectHelper.setSelection(recipe.category)
+            binding.tilDescription.editText?.setText(recipe.description)
+            binding.sServings.value = recipe.servingsNum.toFloat()
+        }
     }
 
     private fun showPopup() {
@@ -197,6 +219,9 @@ class EditRecipeFragment : Fragment() {
     }
 
     companion object {
-        private const val TAG = "EditMealFragment"
+        private const val TAG = "EditRecipeFragment"
+
+        const val EDIT_ID_KEY = "edit_recipe_id"
+        const val FLOW_TYPE_KEY = "flow_type_key"
     }
 }
